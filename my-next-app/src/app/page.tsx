@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 export default function Home() {
   return (
     <div className="space-y-16">
-      {/* Hero Section */}
+      {/* H Section */}
       <section className="min-h-screen flex items-center justify-center bg-background text-foreground relative px-6">
         <div className="text-center space-y-6 max-w-3xl mx-auto">
           <h1 className="text-5xl font-extrabold leading-tight">
