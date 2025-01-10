@@ -22,6 +22,9 @@ export default function RootLayout({
               <a href="/get-started" className="hover:text-primary transition">
                 Get Started
               </a>
+              <a href="/geo-upload" className="hover:text-primary transition">
+                Maps
+              </a>
             </div>
           </nav>
         </header>
