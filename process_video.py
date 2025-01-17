@@ -4,7 +4,7 @@ import time
 from tqdm import tqdm
 
 # Load the model
-model = YOLO("best.pt")
+model = YOLO("yolo11x-250-a.pt")
 class_names = model.names
 
 # Input and output video settings
