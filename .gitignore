@@ -1,2 +1,2 @@
-my-next-app/public/uploads
-my-next-app/public/processed
+my-next-app/public/uploads/*
+my-next-app/public/processed/*
