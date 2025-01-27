@@ -27,7 +27,7 @@ export default function RootLayout({
         </header>
         <main className="mt-16">{children}</main>
         <footer className="bg-secondary text-secondary-foreground py-6 text-center">
-          <p>&copy; 2025 RoadAI. All rights reserved.</p>
+          <p>&copy; 2025 PaveAI. All rights reserved.</p>
         </footer>
       </body>
     </html>
