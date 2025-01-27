@@ -41,4 +41,8 @@ yarn-error.log*
 next-env.d.ts
 
 # macOS DSStore
-.DS_STore
+.DS_Store
+
+
+my-next-app/public/uploads/*
+my-next-app/public/processed/*
