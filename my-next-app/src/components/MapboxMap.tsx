@@ -301,7 +301,7 @@ export default function SimpleGoogleMap() {
     <div className="relative w-full h-screen">
       {/* 1) Load Google Maps Script with Places Library */}
       <Script
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDDUu1gbVwj8pIbcPvusPSAb0cjyUN9l1s&libraries=places"
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLEAPI}&libraries=places`}
         onLoad={initMap}
       />
 
