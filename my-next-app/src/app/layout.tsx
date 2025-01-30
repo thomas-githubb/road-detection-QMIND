@@ -19,8 +19,11 @@ export default function RootLayout({
               <a href="/about" className="hover:text-primary transition">
                 About
               </a>
-              <a href="/get-started" className="hover:text-primary transition">
-                Get Started
+              <a href="/dashboard" className="hover:text-primary transition">
+                Dashboard
+              </a>
+              <a href="/auth" className="hover:text-primary transition">
+                Log In
               </a>
             </div>
           </nav>
