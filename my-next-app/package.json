@@ -9,19 +9,39 @@
     "lint": "next lint"
   },
   "dependencies": {
+<<<<<<< HEAD
+=======
+    "@azure/storage-blob": "^12.26.0",
+    "@radix-ui/react-dialog": "^1.1.5",
+    "@radix-ui/react-label": "^2.1.1",
+    "@radix-ui/react-progress": "^1.1.1",
+    "@radix-ui/react-separator": "^1.1.1",
+>>>>>>> 0fcc3e25d6c749ff37e39b73da8073ba853e98ad
     "@radix-ui/react-slot": "^1.1.1",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+<<<<<<< HEAD
+=======
+    "firebase": "^11.2.0",
+>>>>>>> 0fcc3e25d6c749ff37e39b73da8073ba853e98ad
     "lucide-react": "^0.469.0",
     "next": "15.1.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+<<<<<<< HEAD
+=======
+    "shadcn-ui": "^0.9.4",
+>>>>>>> 0fcc3e25d6c749ff37e39b73da8073ba853e98ad
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+<<<<<<< HEAD
+=======
+    "@types/google.maps": "^3.58.1",
+>>>>>>> 0fcc3e25d6c749ff37e39b73da8073ba853e98ad
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

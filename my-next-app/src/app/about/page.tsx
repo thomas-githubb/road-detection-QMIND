@@ -5,13 +5,21 @@ export default function About() {
       <header className="text-center my-12">
         <h1 className="text-4xl font-extrabold mb-4">About PaveAI</h1>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+<<<<<<< HEAD
           PaveAI is a cutting-edge platform designed to leverage artificial intelligence for improving road infrastructure and urban planning. By offering actionable insights to governments, insurance providers, and urban planners, we aim to make roads safer and cities smarter.
+=======
+          PaveAI is a cutting-edge platform designed to leverage artificial
+          intelligence for improving road infrastructure and urban planning. By
+          offering actionable insights to governments, insurance providers, and
+          urban planners, we aim to make roads safer and cities smarter.
+>>>>>>> 0fcc3e25d6c749ff37e39b73da8073ba853e98ad
         </p>
       </header>
 
       {/* Features Section */}
       <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 w-full max-w-7xl">
         <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200">
+<<<<<<< HEAD
           <h2 className="text-xl font-semibold mb-2 text-primary">Road Quality Analysis</h2>
           <p className="text-gray-600">
             Employ advanced AI models to assess road conditions, providing actionable insights for efficient planning and maintenance.
@@ -27,6 +35,32 @@ export default function About() {
           <h2 className="text-xl font-semibold mb-2 text-primary">Insurance Insights</h2>
           <p className="text-gray-600">
             Enable insurance providers to better evaluate road conditions and associated risks, leading to more accurate policies.
+=======
+          <h2 className="text-xl font-semibold mb-2 text-primary">
+            Road Quality Analysis
+          </h2>
+          <p className="text-gray-600">
+            Employ advanced AI models to assess road conditions, providing
+            actionable insights for efficient planning and maintenance.
+          </p>
+        </div>
+        <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200">
+          <h2 className="text-xl font-semibold mb-2 text-primary">
+            Government Solutions
+          </h2>
+          <p className="text-gray-600">
+            Assist governments in prioritizing infrastructure improvements to
+            enhance safety and optimize resource allocation.
+          </p>
+        </div>
+        <div className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200">
+          <h2 className="text-xl font-semibold mb-2 text-primary">
+            Insurance Insights
+          </h2>
+          <p className="text-gray-600">
+            Enable insurance providers to better evaluate road conditions and
+            associated risks, leading to more accurate policies.
+>>>>>>> 0fcc3e25d6c749ff37e39b73da8073ba853e98ad
           </p>
         </div>
       </section>
