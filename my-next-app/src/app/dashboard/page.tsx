@@ -33,7 +33,7 @@ export default function DashboardPage() {
     try {
       const formData = new FormData();
       formData.append("file", selectedFile);
-      const res = await fetch("http://localhost:4000/api/process", {
+      const res = await fetch("/api/process", {
         method: "POST",
         body: formData,
         headers: { Accept: "application/json" }
