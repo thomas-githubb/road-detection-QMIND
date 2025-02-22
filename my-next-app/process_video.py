@@ -9,7 +9,7 @@ import argparse
 def main(input_path, output_path):
     # Get the directory of the current script
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(script_dir, "yolo11x-300-a.pt")
+    model_path = os.path.join(script_dir, "yolo11s-200.pt")
 
     # Load the model
     if not os.path.exists(model_path):
