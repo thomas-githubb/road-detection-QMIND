@@ -6,19 +6,34 @@ import './App.css';
 function App() {
   // State variables
   const [blobServiceClient, setBlobServiceClient] = useState(null);
-  const [containerClient, setContainerClient] = useState(null);
+  const [uploadsContainerClient, setUploadsContainerClient] = useState(null);
+  const [processedContainerClient, setProcessedContainerClient] = useState(null);
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadStatus, setUploadStatus] = useState('');
   const [downloadFileName, setDownloadFileName] = useState('');
   const [downloadStatus, setDownloadStatus] = useState('');
   const [videoSrc, setVideoSrc] = useState('');
 
-  // Backend server URL
-  const backendUrl = 'http://localhost:4000/api/get-sas-token';
+  // Azure Blob Storage Endpoint
+  const blobEndpoint = `https://${
+    process.env.REACT_APP_AZURE_STORAGE_ACCOUNT_NAME ||
+    process.env.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME ||
+    'paveaiblob'
+  }.blob.core.windows.net`;
 
-  // Azure Blob Storage Endpoint and Container Name
-  const blobEndpoint = 'https://paveaiblob.blob.core.windows.net/';
-  const containerName = 'videos'; // Replace with your container name
+  // Container names
+  const uploadsContainerName =
+    process.env.REACT_APP_AZURE_STORAGE_UPLOADS_CONTAINER_NAME ||
+    process.env.NEXT_PUBLIC_AZURE_STORAGE_UPLOADS_CONTAINER_NAME ||
+    'uploads';
+  const processedContainerName =
+    process.env.REACT_APP_AZURE_STORAGE_PROCESSED_CONTAINER_NAME ||
+    process.env.NEXT_PUBLIC_AZURE_STORAGE_PROCESSED_CONTAINER_NAME ||
+    'processed';
+
+  // Backend URL to get the SAS token
+  // Make sure this points to the Express server running on port 4000
+  const backendUrl = 'http://localhost:4000/api/get-sas-token';
 
   // Initialize BlobServiceClient with SAS token
   useEffect(() => {
@@ -36,9 +51,12 @@ function App() {
         const blobService = new BlobServiceClient(`${blobEndpoint}?${sasToken}`);
         setBlobServiceClient(blobService);
 
-        // Get ContainerClient
-        const container = blobService.getContainerClient(containerName);
-        setContainerClient(container);
+        // Container clients
+        const uploadsContainer = blobService.getContainerClient(uploadsContainerName);
+        setUploadsContainerClient(uploadsContainer);
+
+        const processedContainer = blobService.getContainerClient(processedContainerName);
+        setProcessedContainerClient(processedContainer);
 
         console.log('BlobServiceClient initialized.');
       } catch (error) {
@@ -48,33 +66,35 @@ function App() {
     };
 
     initializeBlobService();
-  }, [backendUrl, blobEndpoint, containerName]);
+  }, [backendUrl, blobEndpoint, uploadsContainerName, processedContainerName]);
 
-  // Handle File Selection for Upload
+  // Handle file selection for upload
   const handleFileChange = (e) => {
     setUploadFile(e.target.files[0]);
   };
 
-  // Handle Upload Button Click
+  // Upload file to "uploads" container
   const handleUpload = async () => {
     if (!uploadFile) {
       alert('Please select an MP4 file to upload.');
+      return;
+    }
+    if (!uploadsContainerClient) {
+      alert('Uploads container is not ready yet.');
       return;
     }
 
     try {
       setUploadStatus('Uploading...');
       const blobName = encodeURIComponent(uploadFile.name);
-      const blockBlobClient = containerClient.getBlockBlobClient(blobName);
+      const blockBlobClient = uploadsContainerClient.getBlockBlobClient(blobName);
 
-      // Set upload options with appropriate content type
+      // Set upload options with content type
       const uploadOptions = {
         blobHTTPHeaders: { blobContentType: 'video/mp4' },
       };
 
-      // Upload the file
-      const uploadResponse = await blockBlobClient.uploadData(uploadFile, uploadOptions);
-      console.log('Upload successful:', uploadResponse.requestId);
+      await blockBlobClient.uploadData(uploadFile, uploadOptions);
       setUploadStatus('Upload successful!');
     } catch (error) {
       console.error('Upload error:', error);
@@ -82,23 +102,24 @@ function App() {
     }
   };
 
-  // Handle Download Button Click
+  // Download file from "processed" container
   const handleDownload = async () => {
     if (!downloadFileName) {
       alert('Please enter the file name to download.');
+      return;
+    }
+    if (!processedContainerClient) {
+      alert('Processed container is not ready yet.');
       return;
     }
 
     try {
       setDownloadStatus('Downloading...');
       const blobName = encodeURIComponent(downloadFileName);
-      const blobClient = containerClient.getBlobClient(blobName);
+      const blobClient = processedContainerClient.getBlobClient(blobName);
 
-      // Download the blob
       const downloadResponse = await blobClient.download();
       const blob = await downloadResponse.blobBody;
-
-      // Create a URL for the downloaded blob
       const url = URL.createObjectURL(blob);
       setVideoSrc(url);
       setDownloadStatus('Download and playback successful!');
@@ -114,7 +135,7 @@ function App() {
 
       {/* Upload Section */}
       <div className="section">
-        <h2>Upload MP4 File</h2>
+        <h2>Upload MP4 File (to "uploads" container)</h2>
         <input type="file" accept=".mp4" onChange={handleFileChange} />
         <button onClick={handleUpload}>Upload</button>
         <p>{uploadStatus}</p>
@@ -122,7 +143,7 @@ function App() {
 
       {/* Download Section */}
       <div className="section">
-        <h2>Download MP4 File</h2>
+        <h2>Download MP4 File (from "processed" container)</h2>
         <input
           type="text"
           placeholder="Enter file name to download (e.g., video.mp4)"

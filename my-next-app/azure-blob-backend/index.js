@@ -1,48 +1,56 @@
-// azure-blob-backend/index.js
+// index.js
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { BlobServiceClient, StorageSharedKeyCredential, generateBlobSASQueryParameters, BlobSASPermissions } = require('@azure/storage-blob');
-const dotenv = require('dotenv');
-
-dotenv.config();
+const {
+  BlobServiceClient,
+  StorageSharedKeyCredential,
+  generateAccountSASQueryParameters,
+  AccountSASPermissions,
+  SASProtocol,
+} = require('@azure/storage-blob');
 
 const app = express();
 const port = process.env.PORT || 4000;
 
-// Enable CORS for all origins (for development)
-// In production, restrict this to your frontend's domain
+// Enable basic CORS so that your frontends (React, Next.js, etc.) can call this API
 app.use(cors());
 
-// Initialize Blob Service Client
 const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
 const accountKey = process.env.AZURE_STORAGE_ACCOUNT_KEY;
-const containerName = process.env.AZURE_STORAGE_CONTAINER_NAME;
 
+if (!account || !accountKey) {
+  console.error('Missing Azure Storage account configuration in .env');
+  process.exit(1);
+}
+
+// Create a shared key credential used to sign the SAS token
 const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
-const blobServiceClient = new BlobServiceClient(
-  `https://${account}.blob.core.windows.net`,
-  sharedKeyCredential
-);
 
-// Endpoint to generate SAS token
+// GET /api/get-sas-token
+// Returns a short-lived SAS token (1 hour by default)
 app.get('/api/get-sas-token', async (req, res) => {
   try {
-    const containerClient = blobServiceClient.getContainerClient(containerName);
+    const now = new Date();
+    const expiry = new Date(now);
+    expiry.setHours(now.getHours() + 1); // Token valid for 1 hour
 
-    // Ensure the container exists
-    const exists = await containerClient.exists();
-    if (!exists) {
-      return res.status(404).json({ error: 'Container does not exist.' });
-    }
+    // Permissions: read, write, delete, list, add, create, update, process
+    const permissions = AccountSASPermissions.parse('rwdlacup');
+    const services = 'b'; // Blob service
+    const resourceTypes = 'sco'; // service, container, object
 
-    // Define SAS token permissions and expiry
-    const sasOptions = {
-      containerName,
-      permissions: BlobSASPermissions.parse("racwd"), // Read, Add, Create, Write, Delete
-      expiresOn: new Date(new Date().valueOf() + 3600 * 1000), // 1 hour from now
-    };
-
-    const sasToken = generateBlobSASQueryParameters(sasOptions, sharedKeyCredential).toString();
+    const sasToken = generateAccountSASQueryParameters(
+      {
+        expiresOn: expiry,
+        permissions,
+        services,
+        resourceTypes,
+        protocol: SASProtocol.HttpsAndHttp,
+        startsOn: now,
+      },
+      sharedKeyCredential
+    ).toString();
 
     res.json({ sasToken });
   } catch (error) {
