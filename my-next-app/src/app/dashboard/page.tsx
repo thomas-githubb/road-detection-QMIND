@@ -16,18 +16,11 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Loader2, UploadCloud } from "lucide-react";
 
-// 1. We'll fetch the SAS token from the Next.js route /api/get-sas-token
+// 1. Fetch SAS token from the Next.js route
 const sasBackendUrl = "/api/get-sas-token";
+// 2. Construct the Blob Storage endpoint using NEXT_PUBLIC_ variables
+const blobEndpoint = `https://${process.env.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME || 'paveaiblob'}.blob.core.windows.net`;
 
-// 2. Construct the base Blob Storage endpoint from environment variables
-const blobEndpoint = `https://${
-  // Make sure you set NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME in your .env file
-  process.env.NEXT_PUBLIC_AZURE_STORAGE_ACCOUNT_NAME || "YOUR-STORAGE-ACCOUNT"
-}.blob.core.windows.net`;
-
-/**
- * Fetches the account-level SAS token from /api/get-sas-token
- */
 const fetchSASToken = async (): Promise<string> => {
   const response = await fetch(sasBackendUrl);
   if (!response.ok) {
@@ -42,12 +35,8 @@ const fetchSASToken = async (): Promise<string> => {
   return data.sasToken;
 };
 
-/**
- * Creates a BlobServiceClient using the fetched SAS token
- */
 const getBlobServiceClient = async (): Promise<BlobServiceClient> => {
   const sasToken = await fetchSASToken();
-  // If the token doesn’t start with “?”, add one
   const separator = sasToken.startsWith("?") ? "" : "?";
   return new BlobServiceClient(`${blobEndpoint}${separator}${sasToken}`);
 };
@@ -78,26 +67,21 @@ export default function DashboardPage() {
     setAnalysisError(null);
 
     try {
-      // 1) Create a BlobServiceClient using the account-level SAS token.
+      // Create BlobServiceClient with SAS token
       const blobServiceClient = await getBlobServiceClient();
 
-      // 2) Ensure the "uploads" container exists and upload the raw video
-      const uploadsContainerName =
-        process.env.NEXT_PUBLIC_AZURE_STORAGE_UPLOADS_CONTAINER_NAME || "uploads";
-      const uploadsContainerClient = blobServiceClient.getContainerClient(
-        uploadsContainerName
-      );
+      // Ensure the "uploads" container exists
+      const uploadsContainerName = process.env.NEXT_PUBLIC_AZURE_STORAGE_UPLOADS_CONTAINER_NAME || "uploads";
+      const uploadsContainerClient = blobServiceClient.getContainerClient(uploadsContainerName);
       await uploadsContainerClient.createIfNotExists({ access: "container" });
 
-      const rawBlobClient = uploadsContainerClient.getBlockBlobClient(
-        selectedFile.name
-      );
+      // Upload the raw video
+      const rawBlobClient = uploadsContainerClient.getBlockBlobClient(selectedFile.name);
       await rawBlobClient.uploadData(selectedFile, {
         blobHTTPHeaders: { blobContentType: selectedFile.type },
       });
 
-      // 3) Call your Next.js route to do the Python YOLO processing
-      //    (which saves the processed video to /public/processed locally)
+      // Call your processing endpoint
       const formData = new FormData();
       formData.append("file", selectedFile);
 
@@ -119,39 +103,29 @@ export default function DashboardPage() {
         throw new Error(errorMessage);
       }
 
-      // Suppose the response gives us a relative URL like /processed/XYZ-output.mp4
       const data = await res.json();
       if (!data.outputUrl) {
         throw new Error("No outputUrl returned from /api/process");
       }
       setOutputUrl(data.outputUrl);
 
-      // 4) Download the processed result (the local /processed/XYZ-output.mp4)
+      // Download the processed video
       const processedResponse = await fetch(data.outputUrl);
       if (!processedResponse.ok) {
-        throw new Error(
-          `Failed to fetch processed video: ${processedResponse.status} ${processedResponse.statusText}`
-        );
+        throw new Error(`Failed to fetch processed video: ${processedResponse.status} ${processedResponse.statusText}`);
       }
       const processedBlob = await processedResponse.blob();
 
-      // 5) Upload the processed file to "processed" container in Azure
-      const processedContainerName =
-        process.env.NEXT_PUBLIC_AZURE_STORAGE_PROCESSED_CONTAINER_NAME ||
-        "processed";
-      const processedContainerClient = blobServiceClient.getContainerClient(
-        processedContainerName
-      );
+      // Upload the processed video to the "processed" container
+      const processedContainerName = process.env.NEXT_PUBLIC_AZURE_STORAGE_PROCESSED_CONTAINER_NAME || "processed";
+      const processedContainerClient = blobServiceClient.getContainerClient(processedContainerName);
       await processedContainerClient.createIfNotExists({ access: "container" });
 
-      const processedBlobClient = processedContainerClient.getBlockBlobClient(
-        selectedFile.name
-      );
+      const processedBlobClient = processedContainerClient.getBlockBlobClient(selectedFile.name);
       await processedBlobClient.uploadData(processedBlob, {
         blobHTTPHeaders: { blobContentType: processedBlob.type },
       });
 
-      // Completed successfully
       setStep(3);
       setSelectedFile(null);
     } catch (err: any) {
@@ -162,9 +136,6 @@ export default function DashboardPage() {
     }
   };
 
-  /**
-   * Render the step-specific UI
-   */
   const renderStepContent = () => {
     switch (step) {
       case 1:
@@ -175,16 +146,10 @@ export default function DashboardPage() {
               className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition"
             >
               <UploadCloud className="mx-auto h-10 w-10 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-800">
-                Drag & drop or click to upload
-              </p>
-              <p className="mt-2 text-sm text-gray-400">
-                MP4 or WEBM (max ~200MB)
-              </p>
+              <p className="mt-2 text-sm text-gray-800">Drag & drop or click to upload</p>
+              <p className="mt-2 text-sm text-gray-400">MP4 or WEBM (max ~200MB)</p>
               {selectedFile && (
-                <p className="text-xs text-gray-500 mt-1">
-                  Selected: {selectedFile.name}
-                </p>
+                <p className="text-xs text-gray-500 mt-1">Selected: {selectedFile.name}</p>
               )}
             </div>
             <Input
@@ -227,11 +192,7 @@ export default function DashboardPage() {
               Analysis complete! Here’s your processed video:
             </p>
             {outputUrl && (
-              <video
-                src={outputUrl}
-                controls
-                className="border rounded w-full"
-              />
+              <video src={outputUrl} controls className="border rounded w-full" />
             )}
             {analysisError && (
               <p className="text-red-600 text-sm">{analysisError}</p>
@@ -258,8 +219,7 @@ export default function DashboardPage() {
               AI Road Damage Analysis
             </CardTitle>
             <CardDescription className="text-sm text-gray-500">
-              Upload your drive footage to analyze road damage using our YOLOv11
-              model.
+              Upload your drive footage to analyze road damage using our YOLOv11 model.
             </CardDescription>
           </CardHeader>
           <Separator />

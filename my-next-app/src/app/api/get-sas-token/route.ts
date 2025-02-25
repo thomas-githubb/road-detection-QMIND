@@ -1,4 +1,3 @@
-// src/app/api/get-sas-token/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import {
   StorageSharedKeyCredential,
@@ -6,10 +5,6 @@ import {
   AccountSASPermissions,
   SASProtocol,
 } from "@azure/storage-blob";
-
-// Make sure you have these in your .env:
-// AZURE_STORAGE_ACCOUNT_NAME=paveaiblob
-// AZURE_STORAGE_ACCOUNT_KEY=your_secret_key
 
 export async function GET(req: NextRequest) {
   try {
@@ -21,21 +16,19 @@ export async function GET(req: NextRequest) {
     }
 
     const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
-
     const now = new Date();
-    const expires = new Date(now);
-    // Let token be valid for 1 hour
-    expires.setHours(expires.getHours() + 1);
+    // Set the token to start 15 minutes in the past to handle clock skew
+    const startsOn = new Date(now.getTime() - 15 * 60 * 1000);
+    const expiresOn = new Date(now.getTime() + 60 * 60 * 1000);
 
     const sasToken = generateAccountSASQueryParameters(
       {
-        expiresOn: expires,
-        // read, write, delete, list, add, create, update, process
+        startsOn,
+        expiresOn,
         permissions: AccountSASPermissions.parse("rwdlacup"),
-        services: "b",        // Blob
-        resourceTypes: "sco", // Service, container, object
+        services: "b",
+        resourceTypes: "sco",
         protocol: SASProtocol.HttpsAndHttp,
-        startsOn: now,
       },
       sharedKeyCredential
     ).toString();

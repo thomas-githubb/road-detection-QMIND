@@ -1,4 +1,3 @@
-// index.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -13,7 +12,6 @@ const {
 const app = express();
 const port = process.env.PORT || 4000;
 
-// Enable basic CORS so that your frontends (React, Next.js, etc.) can call this API
 app.use(cors());
 
 const account = process.env.AZURE_STORAGE_ACCOUNT_NAME;
@@ -24,30 +22,28 @@ if (!account || !accountKey) {
   process.exit(1);
 }
 
-// Create a shared key credential used to sign the SAS token
 const sharedKeyCredential = new StorageSharedKeyCredential(account, accountKey);
 
-// GET /api/get-sas-token
-// Returns a short-lived SAS token (1 hour by default)
 app.get('/api/get-sas-token', async (req, res) => {
   try {
     const now = new Date();
-    const expiry = new Date(now);
-    expiry.setHours(now.getHours() + 1); // Token valid for 1 hour
+    // Set start time 15 minutes ago to avoid clock skew issues
+    const startsOn = new Date(now.getTime() - 15 * 60 * 1000);
+    const expiresOn = new Date(now.getTime() + 60 * 60 * 1000); // Valid for 1 hour
 
     // Permissions: read, write, delete, list, add, create, update, process
     const permissions = AccountSASPermissions.parse('rwdlacup');
     const services = 'b'; // Blob service
-    const resourceTypes = 'sco'; // service, container, object
+    const resourceTypes = 'sco'; // Service, container, object
 
     const sasToken = generateAccountSASQueryParameters(
       {
-        expiresOn: expiry,
+        startsOn,
+        expiresOn,
         permissions,
         services,
         resourceTypes,
         protocol: SASProtocol.HttpsAndHttp,
-        startsOn: now,
       },
       sharedKeyCredential
     ).toString();

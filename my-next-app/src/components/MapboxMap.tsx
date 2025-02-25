@@ -12,18 +12,12 @@ export default function SimpleGoogleMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
 
   // Markers for Start (green) and End (red) points
-  const [startMarker, setStartMarker] = useState<google.maps.Marker | null>(
-    null
-  );
+  const [startMarker, setStartMarker] = useState<google.maps.Marker | null>(null);
   const [endMarker, setEndMarker] = useState<google.maps.Marker | null>(null);
 
   // References for Directions Service and Renderer
-  const directionsServiceRef = useRef<google.maps.DirectionsService | null>(
-    null
-  );
-  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(
-    null
-  );
+  const directionsServiceRef = useRef<google.maps.DirectionsService | null>(null);
+  const directionsRendererRef = useRef<google.maps.DirectionsRenderer | null>(null);
 
   // Input references for Autocomplete
   const startInputRef = useRef<HTMLInputElement | null>(null);
@@ -37,7 +31,10 @@ export default function SimpleGoogleMap() {
    * Initialize the Google Map once the script loads.
    */
   function initMap() {
-    if (!(window as any).google) return; // Ensure Google Maps script is loaded
+    if (!window.google) {
+      console.error("Google Maps API not loaded yet");
+      return;
+    }
     if (mapRef.current) return; // Prevent re-initialization
 
     const mapElement = document.getElementById("map");
@@ -47,7 +44,7 @@ export default function SimpleGoogleMap() {
     }
 
     // Initialize the map
-    const map = new google.maps.Map(mapElement as HTMLElement, {
+    const map = new google.maps.Map(mapElement, {
       center: { lat: 39.8283, lng: -98.5795 }, // Center of the US
       zoom: 4,
     });
@@ -56,17 +53,13 @@ export default function SimpleGoogleMap() {
     // Initialize Directions Service and Renderer
     directionsServiceRef.current = new google.maps.DirectionsService();
     directionsRendererRef.current = new google.maps.DirectionsRenderer({ map });
-    directionsRendererRef.current.setOptions({ suppressMarkers: true }); // Suppress default markers
+    directionsRendererRef.current.setOptions({ suppressMarkers: true });
 
     // Setup Autocomplete for Start Address
     if (startInputRef.current) {
-      const startAutocomplete = new google.maps.places.Autocomplete(
-        startInputRef.current,
-        {
-          types: ["geocode"], // Restrict to geographical locations
-        }
-      );
-
+      const startAutocomplete = new google.maps.places.Autocomplete(startInputRef.current, {
+        types: ["geocode"],
+      });
       startAutocomplete.addListener("place_changed", () => {
         const place = startAutocomplete.getPlace();
         if (place && place.geometry) {
@@ -77,13 +70,9 @@ export default function SimpleGoogleMap() {
 
     // Setup Autocomplete for End Address
     if (endInputRef.current) {
-      const endAutocomplete = new google.maps.places.Autocomplete(
-        endInputRef.current,
-        {
-          types: ["geocode"],
-        }
-      );
-
+      const endAutocomplete = new google.maps.places.Autocomplete(endInputRef.current, {
+        types: ["geocode"],
+      });
       endAutocomplete.addListener("place_changed", () => {
         const place = endAutocomplete.getPlace();
         if (place && place.geometry) {
@@ -102,7 +91,7 @@ export default function SimpleGoogleMap() {
     place: google.maps.places.PlaceResult,
     type: "start" | "end"
   ) {
-    if (!mapRef.current) return; // Guard against null
+    if (!mapRef.current) return;
     const loc = place.geometry?.location;
     if (!loc) {
       setError("Selected place has no location.");
@@ -155,22 +144,18 @@ export default function SimpleGoogleMap() {
       try {
         const geojson = JSON.parse(reader.result as string);
 
-        // Validate top-level GeoJSON structure
         if (geojson.type !== "FeatureCollection") {
           throw new Error("Invalid GeoJSON. Must be FeatureCollection.");
         }
 
-        // Clear existing data on the map
-        mapRef.current.data.forEach((feature) =>
-          mapRef.current.data.remove(feature)
-        );
+        // Clear existing GeoJSON data
+        mapRef.current.data.forEach((feature) => mapRef.current?.data.remove(feature));
 
         // Add new GeoJSON data to the map
         mapRef.current.data.addGeoJson(geojson);
 
-        // Initialize bounds to fit the new GeoJSON
+        // Extend bounds to fit the GeoJSON
         const bounds = new google.maps.LatLngBounds();
-
         mapRef.current.data.forEach((feature) => {
           const geometry = feature.getGeometry();
           if (!geometry) {
@@ -180,17 +165,14 @@ export default function SimpleGoogleMap() {
           processGeometry(geometry, bounds);
         });
 
-        // Only fit bounds if they are valid (i.e., not empty)
         if (!bounds.isEmpty()) {
           mapRef.current.fitBounds(bounds);
         }
 
-        setError(""); // Clear any previous errors
+        setError("");
       } catch (err: any) {
         console.error("GeoJSON Upload Error:", err);
-        setError(
-          "Invalid GeoJSON file. Please ensure it is a valid FeatureCollection."
-        );
+        setError("Invalid GeoJSON file. Please ensure it is a valid FeatureCollection.");
       } finally {
         setLoading(false);
       }
@@ -215,7 +197,6 @@ export default function SimpleGoogleMap() {
     bounds: google.maps.LatLngBounds
   ) {
     const type = geometry.getType();
-
     switch (type) {
       case "Point": {
         const point = geometry as google.maps.Data.Point;
@@ -248,9 +229,8 @@ export default function SimpleGoogleMap() {
         });
         break;
       }
-      default: {
+      default:
         console.warn("Skipping unsupported geometry type:", type);
-      }
     }
   }
 
@@ -281,17 +261,11 @@ export default function SimpleGoogleMap() {
       (result, status) => {
         setLoading(false);
         if (status === google.maps.DirectionsStatus.OK && result) {
-          if (directionsRendererRef.current) {
-            directionsRendererRef.current.setDirections(result);
-          } else {
-            setError("Directions Renderer is not available.");
-          }
+          directionsRendererRef.current?.setDirections(result);
           setError("");
         } else {
           console.error("Directions API Error:", status, result);
-          setError(
-            "Unable to create route. Please check the addresses or your API quota."
-          );
+          setError("Unable to create route. Please check the addresses or your API quota.");
         }
       }
     );
@@ -303,6 +277,7 @@ export default function SimpleGoogleMap() {
       <Script
         src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLEAPI}&libraries=places`}
         onLoad={initMap}
+        strategy="afterInteractive"
       />
 
       {/* 2) Loading Overlay */}
@@ -334,21 +309,12 @@ export default function SimpleGoogleMap() {
       <div className="absolute top-4 right-4 z-40 w-80 p-2 bg-white/80 rounded shadow space-y-2">
         <div>
           <Label htmlFor="start-input">Start Address</Label>
-          <Input
-            id="start-input"
-            ref={startInputRef}
-            placeholder="Enter starting address"
-          />
+          <Input id="start-input" ref={startInputRef} placeholder="Enter starting address" />
         </div>
         <div>
           <Label htmlFor="end-input">End Address</Label>
-          <Input
-            id="end-input"
-            ref={endInputRef}
-            placeholder="Enter destination address"
-          />
+          <Input id="end-input" ref={endInputRef} placeholder="Enter destination address" />
         </div>
-        {/* Apply 'text-black' to make the button text color black */}
         <Button className="text-black" onClick={handleRoute}>
           Create Route
         </Button>
